@@ -9,14 +9,16 @@ Gem::Specification.new do |s|
   s.version     = ViewBacked::VERSION
   s.authors     = ["Kevin Finn"]
   s.email       = ["kevin@relevant.healthcare"]
-  s.homepage    = "TODO"
-  s.summary     = "TODO: Summary of ViewBacked."
-  s.description = "TODO: Description of ViewBacked."
+  s.homepage    = "http://relevant.healthcare"
+  s.summary     = "ActiveRecord models backed by views"
+  s.description = "Allows users to define models backed by DB views, rather than tables."
   s.license     = "MIT"
 
-  s.files = Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.rdoc"]
+  s.files = Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]
 
-  s.add_dependency "rails", "~> 4.2.7.1"
+  s.add_dependency "rails", "~> 4.2.8"
 
+  s.add_development_dependency "fabrication"
   s.add_development_dependency "pg"
+  s.add_development_dependency "rspec-rails"
 end
