@@ -1,5 +1,4 @@
 require 'rails_helper'
-require 'byebug'
 
 describe ViewBacked do
   class ViewBackedModel < ActiveRecord::Base
@@ -10,6 +9,8 @@ describe ViewBacked do
       v.integer :provider_id, 'provider_id'
       v.date :date_of_birth
       v.integer :patient_count, 'COUNT(*)'
+      v.decimal :average_risk_score, 'AVG(risk_score)'
+      v.column :sum_risk_score, :integer, 'SUM(risk_score)'
 
       v.from Patient.group(:provider_id, :date_of_birth)
     end
@@ -25,7 +26,8 @@ describe ViewBacked do
     Fabricate(
       :patient,
       provider: provider_alpha,
-      date_of_birth: Date.new(1991, 10, 31)
+      date_of_birth: Date.new(1991, 10, 31),
+      risk_score: 2
     )
   end
 
@@ -33,7 +35,8 @@ describe ViewBacked do
     Fabricate(
       :patient,
       provider: provider_alpha,
-      date_of_birth: Date.new(1991, 10, 31)
+      date_of_birth: Date.new(1991, 10, 31),
+      risk_score: 3
     )
   end
 
@@ -60,6 +63,14 @@ describe ViewBacked do
 
     it 'configures date columns and infers sql selection expressions' do
       expect(view_backed_instance.date_of_birth).to eq Date.new(1991, 10, 31)
+    end
+
+    it 'configures decimal column' do
+      expect(view_backed_instance.average_risk_score).to eq 2.5
+    end
+
+    it 'configures a column defined with #column syntax' do
+      expect(view_backed_instance.sum_risk_score).to eq 5
     end
 
     it 'specifies default_scope of model' do

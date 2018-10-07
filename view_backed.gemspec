@@ -20,5 +20,6 @@ Gem::Specification.new do |s|
 
   s.add_development_dependency "pg", "~> 0.18.2"
   s.add_development_dependency "appraisal"
+  s.add_development_dependency "rails", "~> 5.0.7"
   s.add_development_dependency "rspec-rails"
 end

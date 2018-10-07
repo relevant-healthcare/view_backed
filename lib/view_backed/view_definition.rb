@@ -16,22 +16,24 @@ class ViewDefinition
   end
 
   def string(name, expression = name.to_s)
-    selections << Selection.new(
-      new_column(name, nil, ActiveRecord::Type::String.new, :string),
-      expression
-    )
+    column(name, :string, expression)
   end
 
   def integer(name, expression = name.to_s)
-    selections << Selection.new(
-      new_column(name, nil, ActiveRecord::ConnectionAdapters::PostgreSQL::OID::Integer.new, :integer),
-      expression
-    )
+    column(name, :integer, expression)
   end
 
   def date(name, expression = name.to_s)
+    column(name, :date, expression)
+  end
+
+  def decimal(name, expression = name.to_s)
+    column(name, :decimal, expression)
+  end
+
+  def column(name, data_type, expression = name.to_s)
     selections << Selection.new(
-      new_column(name, nil, ActiveRecord::ConnectionAdapters::PostgreSQL::OID::Date.new, :date),
+      new_column(name, nil, data_type_to_cast_type(data_type), data_type),
       expression
     )
   end
@@ -41,6 +43,15 @@ class ViewDefinition
   end
 
   private
+
+  def data_type_to_cast_type(data_type)
+    {
+      integer: ActiveRecord::ConnectionAdapters::PostgreSQL::OID::Integer,
+      date: ActiveRecord::ConnectionAdapters::PostgreSQL::OID::Date,
+      decimal: ActiveRecord::ConnectionAdapters::PostgreSQL::OID::Decimal,
+      string: ActiveRecord::Type::String
+    }[data_type].new
+  end
 
   def new_column(name, default, cast_type, sql_type)
     ActiveRecord::ConnectionAdapters::PostgreSQLColumn.new(
