@@ -13,9 +13,9 @@ module ViewBacked
 
       if Module.const_defined? 'ActiveModel::Type'
         @columns_hash = columns.group_by(&:name).transform_values(&:first)
-        @columns_hash.each do |name, column|
+        columns.each do |column|
           define_attribute(
-            name,
+            column.name,
             ActiveModel::Type.registry.lookup(column.type),
             default: column.default
           )

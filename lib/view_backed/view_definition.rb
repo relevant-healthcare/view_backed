@@ -72,7 +72,7 @@ class ViewDefinition
 
   def data_type_to_sql_type_metadata(data_type)
     cast_type = ActiveRecord::Type.registry.lookup(data_type)
-    sql_type_metadata = ActiveRecord::ConnectionAdapters::SqlTypeMetadata.new(
+    ActiveRecord::ConnectionAdapters::SqlTypeMetadata.new(
       sql_type: ActiveRecord::Base.connection.type_to_sql(data_type),
       type: cast_type.type,
       limit: cast_type.limit,
