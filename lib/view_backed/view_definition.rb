@@ -1,8 +1,8 @@
 class ViewDefinition
-  attr_reader :name
+  attr_reader :view_name
 
-  def initialize(name)
-    @name = name
+  def initialize(view_name)
+    @view_name = view_name
   end
 
   def columns
@@ -33,7 +33,7 @@ class ViewDefinition
 
   def column(name, data_type, expression = name.to_s)
     selections << Selection.new(
-      new_column(name, nil, data_type_to_cast_type(data_type), data_type),
+      new_column(name, nil, data_type),
       expression
     )
   end
@@ -53,15 +53,75 @@ class ViewDefinition
     }[data_type].new
   end
 
-  def new_column(name, default, cast_type, sql_type)
-    ActiveRecord::ConnectionAdapters::PostgreSQLColumn.new(
-      name.to_s,
-      default,
-      cast_type,
-      ActiveRecord::Base.connection.type_to_sql(sql_type)
+  def new_column(name, default, type)
+    if ActiveRecord::Type.respond_to?(:registry)
+      ActiveRecord::ConnectionAdapters::PostgreSQLColumn.new(
+        name.to_s,
+        default,
+        get_sql_type_metadata(type),
+        true,
+        view_name
+      )
+    else
+      ActiveRecord::ConnectionAdapters::PostgreSQLColumn.new(
+        name.to_s,
+        default,
+        data_type_to_cast_type(type),
+        ActiveRecord::Base.connection.type_to_sql(type)
+      )
+    end
+  end
+
+  def get_sql_type_metadata(type)
+    cast_type = ActiveRecord::Type.registry.lookup(type)
+    sql_type_metadata = ActiveRecord::ConnectionAdapters::SqlTypeMetadata.new(
+      sql_type: ActiveRecord::Base.connection.type_to_sql(type),
+      type: cast_type.type,
+      limit: cast_type.limit,
+      precision: cast_type.precision,
+      scale: cast_type.scale
     )
   end
 
+  # def new_column_with_cast_type(name, default, type)
+  #   ActiveRecord::ConnectionAdapters::PostgreSQLColumn.new(
+  #     name.to_s,
+  #     default,
+  #     data_type_to_cast_type(type),
+  #     ActiveRecord::Base.connection.type_to_sql(type)
+  #   )
+  # end
+
+  # def new_column_from_field(table_name, field)
+  #   column_name, type, default, notnull, oid, fmod, collation, comment = field
+  #   type_metadata = fetch_type_metadata(column_name, type, oid.to_i, fmod.to_i)
+  #   default_value = extract_value_from_default(default)
+  #   default_function = extract_default_function(default_value, default)
+
+  #   PostgreSQLColumn.new(
+  #     column_name,
+  #     default_value,
+  #     type_metadata,
+  #     !notnull,
+  #     table_name,
+  #     default_function,
+  #     collation,
+  #     comment: comment.presence,
+  #     max_identifier_length: max_identifier_length
+  #   )
+  # end
+
+  # def fetch_type_metadata(column_name, sql_type, oid, fmod)
+  #   cast_type = get_oid_type(oid, fmod, column_name, sql_type)
+  #   simple_type = SqlTypeMetadata.new(
+  #     sql_type: sql_type,
+  #     type: cast_type.type,
+  #     limit: cast_type.limit,
+  #     precision: cast_type.precision,
+  #     scale: cast_type.scale,
+  #   )
+  #   PostgreSQLTypeMetadata.new(simple_type, oid: oid, fmod: fmod)
+  # end
   def selections
     @selections ||= []
   end
