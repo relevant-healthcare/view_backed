@@ -17,8 +17,7 @@ module ViewBacked
           define_attribute(
             name,
             ActiveModel::Type.registry.lookup(column.type),
-            default: column.default,
-            user_provided_default: false
+            default: column.default
           )
         end
       end
