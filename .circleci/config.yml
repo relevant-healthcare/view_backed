@@ -3,12 +3,14 @@ jobs:
   build:
     docker:
       - image: circleci/ruby:2.4.1
+        environment:
+          RAILS_ENV: test
       - image: circleci/postgres:9.6
         environment:
-            POSTGRES_HOST: localhost
-            POSTGRES_USER: view_backed
-            POSTGRES_DB: view_backed_test
-            POSTGRES_PASSWORD: view_backed
+          POSTGRES_HOST: localhost
+          POSTGRES_USER: view_backed
+          POSTGRES_DB: view_backed_test
+          POSTGRES_PASSWORD: view_backed
 
     working_directory: ~/repo
 
