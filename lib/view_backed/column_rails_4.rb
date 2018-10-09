@@ -1,6 +1,6 @@
 module ViewBacked
   class ColumnRails4 < Struct.new(:name, :default, :type)
-    def active_record_column
+    def to_active_record_column
       ActiveRecord::ConnectionAdapters::PostgreSQLColumn.new(
         name.to_s, default, cast_type
       )

@@ -36,7 +36,7 @@ module ViewBacked
 
     def column(name, data_type, expression = name.to_s)
       selections << Selection.new(
-        Column.new(name, nil, data_type).active_record_column,
+        Column.new(name, nil, data_type).to_active_record_column,
         expression
       )
     end

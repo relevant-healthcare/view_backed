@@ -11,8 +11,8 @@ module ViewBacked
   end
 
   class_methods do
-    prepend ViewBacked::Rails5 if Rails.version.match?(/^5/)
     delegate :columns, to: :view_definition
+    prepend ViewBacked::Rails5 if Rails.version.match?(/^5/)
 
     def view
       yield view_definition
