@@ -1,4 +1,6 @@
 class ViewDefinition
+  Column = Rails.version.match?(/^5/) ? ColumnRails5 : ColumnRails4
+
   attr_reader :view_name
 
   def initialize(view_name)
@@ -33,7 +35,7 @@ class ViewDefinition
 
   def column(name, data_type, expression = name.to_s)
     selections << Selection.new(
-      new_column(name, nil, data_type),
+      Column.new(name, nil, data_type).active_record_column,
       expression
     )
   end
@@ -43,43 +45,6 @@ class ViewDefinition
   end
 
   private
-
-  def new_column(name, default, type)
-    if ActiveRecord::Type.respond_to?(:registry)
-      ActiveRecord::ConnectionAdapters::PostgreSQLColumn.new(
-        name.to_s,
-        default,
-        data_type_to_sql_type_metadata(type)
-      )
-    else
-      ActiveRecord::ConnectionAdapters::PostgreSQLColumn.new(
-        name.to_s,
-        default,
-        data_type_to_cast_type(type),
-        ActiveRecord::Base.connection.type_to_sql(type)
-      )
-    end
-  end
-
-  def data_type_to_cast_type(data_type)
-    {
-      integer: ActiveRecord::ConnectionAdapters::PostgreSQL::OID::Integer,
-      date: ActiveRecord::ConnectionAdapters::PostgreSQL::OID::Date,
-      decimal: ActiveRecord::ConnectionAdapters::PostgreSQL::OID::Decimal,
-      string: ActiveRecord::Type::String
-    }[data_type].new
-  end
-
-  def data_type_to_sql_type_metadata(data_type)
-    cast_type = ActiveRecord::Type.registry.lookup(data_type)
-    ActiveRecord::ConnectionAdapters::SqlTypeMetadata.new(
-      sql_type: ActiveRecord::Base.connection.type_to_sql(data_type),
-      type: cast_type.type,
-      limit: cast_type.limit,
-      precision: cast_type.precision,
-      scale: cast_type.scale
-    )
-  end
 
   def selections
     @selections ||= []

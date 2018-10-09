@@ -11,7 +11,12 @@ module ViewBacked
     def view
       yield view_definition
 
-      if Module.const_defined? 'ActiveModel::Type'
+
+      default_scope do
+        from "(#{view_definition.scope.to_sql}) AS #{table_name}"
+      end
+
+      if Rails.version.match?(/^5/)
         @columns_hash = columns.group_by(&:name).transform_values(&:first)
         columns.each do |column|
           define_attribute(
@@ -20,10 +25,6 @@ module ViewBacked
             default: column.default
           )
         end
-      end
-
-      default_scope do
-        from "(#{view_definition.scope.to_sql}) AS #{table_name}"
       end
     end
 
