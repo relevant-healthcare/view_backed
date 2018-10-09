@@ -10,7 +10,7 @@ describe ViewBacked do
       v.date :date_of_birth
       v.integer :patient_count, 'COUNT(*)'
       v.decimal :average_risk_score, 'AVG(risk_score)'
-      v.column :sum_risk_score, :integer, 'SUM(risk_score)'
+      v.column :sum_risk_score, :decimal, 'SUM(risk_score)'
 
       v.from Patient.group(:provider_id, :date_of_birth)
     end
