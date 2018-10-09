@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-describe ViewBacked do
+RSpec.describe ViewBacked do
   class ViewBackedModel < ActiveRecord::Base
     include ViewBacked
 
@@ -54,6 +54,7 @@ describe ViewBacked do
 
   describe '.view' do
     it 'configures string columns' do
+
       expect(view_backed_instance.id).to eq "#{provider_alpha.id}-1991-10-31"
     end
 
