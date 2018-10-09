@@ -2,7 +2,7 @@ PATH
   remote: .
   specs:
     view_backed (0.0.1)
-      rails
+      rails (>= 4.2.7)
 
 GEM
   remote: https://rubygems.org/
