@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
   s.version     = ViewBacked::VERSION
   s.authors     = ["Kevin Finn"]
   s.email       = ["kevin@relevant.healthcare"]
-  s.homepage    = "https://github.com/relevant-healthcare/filter_builder"
+  s.homepage    = "https://github.com/relevant-healthcare/view_backed"
   s.summary     = "Create view backed models with Rails"
   s.description = "Create view backed models with Rails"
   s.license     = "MIT"
