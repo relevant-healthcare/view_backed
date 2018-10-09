@@ -10,19 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2018_10_07_165102) do
+ActiveRecord::Schema.define(version: 20181007165102) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
-  create_table "patients", force: :cascade do |t|
-    t.bigint "provider_id"
-    t.date "date_of_birth"
+  create_table "patients", id: :bigserial, force: :cascade do |t|
+    t.bigint  "provider_id"
+    t.date    "date_of_birth"
     t.decimal "risk_score"
-    t.index ["provider_id"], name: "index_patients_on_provider_id"
+    t.index ["provider_id"], name: "index_patients_on_provider_id", using: :btree
   end
 
-  create_table "providers", force: :cascade do |t|
+  create_table "providers", id: :bigserial, force: :cascade do |t|
     t.string "name"
   end
 
