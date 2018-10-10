@@ -34,7 +34,7 @@ jobs:
       - run: bundle exec appraisal install
       - run: bundle exec appraisal rails-5 'cd spec/dummy/ && rails db:environment:set RAILS_ENV=test'
       - run: bundle exec appraisal 'cd spec/dummy/ && rake db:create'
-      - run: bundle exec appraisal 'cd spec/dummy/ && rake db:migrate'
+      - run: bundle exec appraisal 'cd spec/dummy/ && rake db:schema:load'
 
       - run:
           name: run tests
