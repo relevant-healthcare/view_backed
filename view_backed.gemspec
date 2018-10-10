@@ -22,4 +22,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency "appraisal"
   s.add_development_dependency "rspec-rails"
   s.add_development_dependency "fabrication"
+  s.add_development_dependency "rspec_junit_formatter"
 end
