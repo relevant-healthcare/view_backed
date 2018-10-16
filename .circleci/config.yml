@@ -1,49 +1,55 @@
+working_directory_and_steps_defaults: &working_directory_and_steps_defaults
+  working_directory: ~/repo
+  steps:
+    - checkout
+    - restore_cache:
+        keys:
+        - v1-dependencies-
+    - run:
+        name: install dependencies
+        command: |
+          bundle install --jobs=4 --retry=3 --path vendor/bundle
+    - save_cache:
+        paths:
+          - ./vendor/bundle
+        key: v1-dependencies-{{ checksum "Gemfile.lock" }}
+    - run: bundle exec appraisal install
+    - run: bundle exec appraisal rails-5 'cd spec/dummy/ && rails db:environment:set RAILS_ENV=test'
+    - run: bundle exec appraisal 'cd spec/dummy/ && rake db:create'
+    - run: bundle exec appraisal 'cd spec/dummy/ && rake db:schema:load'
+    - run:
+        name: run tests
+        command: |
+          mkdir /tmp/test-results
+          bundle exec appraisal rspec -r rspec_junit_formatter --format progress --format RspecJunitFormatter
+    - store_test_results:
+        path: /tmp/test-results
+    - store_artifacts:
+        path: /tmp/test-results
+        destination: test-results
+
+postgres_defaults: &postgres_defaults
+  environment:
+    POSTGRES_HOST: localhost
+    POSTGRES_USER: view_backed
+    POSTGRES_DB: view_backed_test
+    POSTGRES_PASSWORD: view_backed
+
 version: 2
 jobs:
-  build:
+  ruby_2.4.1_build_and_test:
     docker:
       - image: circleci/ruby:2.4.1
         environment:
           RAILS_ENV: test
       - image: circleci/postgres:9.6
+        <<: *postgres_defaults
+    <<: *working_directory_and_steps_defaults
+  ruby_2.2.0_build_and_test:
+    docker:
+      - image: circleci/ruby:2.2.0
         environment:
-          POSTGRES_HOST: localhost
-          POSTGRES_USER: view_backed
-          POSTGRES_DB: view_backed_test
-          POSTGRES_PASSWORD: view_backed
-
-    working_directory: ~/repo
-
-    steps:
-      - checkout
-
-      - restore_cache:
-          keys:
-          - v1-dependencies-
-
-      - run:
-          name: install dependencies
-          command: |
-            bundle install --jobs=4 --retry=3 --path vendor/bundle
-
-      - save_cache:
-          paths:
-            - ./vendor/bundle
-          key: v1-dependencies-{{ checksum "Gemfile.lock" }}
-
-      - run: bundle exec appraisal install
-      - run: bundle exec appraisal rails-5 'cd spec/dummy/ && rails db:environment:set RAILS_ENV=test'
-      - run: bundle exec appraisal 'cd spec/dummy/ && rake db:create'
-      - run: bundle exec appraisal 'cd spec/dummy/ && rake db:schema:load'
-
-      - run:
-          name: run tests
-          command: |
-            mkdir /tmp/test-results
-            bundle exec appraisal rspec -r rspec_junit_formatter --format progress --format RspecJunitFormatter
-
-      - store_test_results:
-          path: /tmp/test-results
-      - store_artifacts:
-          path: /tmp/test-results
-          destination: test-results
+          RAILS_ENV: test
+      - image: circleci/postgres:9.6
+        <<: *postgres_defaults
+    <<: *working_directory_and_steps_defaults
