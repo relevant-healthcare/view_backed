@@ -10,6 +10,7 @@ RSpec.describe ViewBacked do
       v.date :date_of_birth
       v.integer :patient_count, 'COUNT(*)'
       v.decimal :average_risk_score, 'AVG(risk_score)'
+      v.boolean :risk_score_above_2, 'AVG(risk_score) > 2'
       v.column :sum_risk_score, :decimal, 'SUM(risk_score)'
 
       v.from Patient.group(:provider_id, :date_of_birth)
@@ -68,6 +69,10 @@ RSpec.describe ViewBacked do
 
     it 'configures decimal column' do
       expect(view_backed_instance.average_risk_score).to eq 2.5
+    end
+
+    it 'configures boolean column' do
+      expect(view_backed_instance.risk_score_above_2).to eq true
     end
 
     it 'configures a column defined with #column syntax' do
