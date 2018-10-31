@@ -34,6 +34,10 @@ module ViewBacked
       column(name, :decimal, expression)
     end
 
+    def boolean(name, expression = name.to_s)
+      column(name, :boolean, expression)
+    end
+
     def column(name, data_type, expression = name.to_s)
       selections << Selection.new(
         Column.new(name, nil, data_type).to_active_record_column,

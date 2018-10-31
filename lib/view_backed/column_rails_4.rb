@@ -13,7 +13,8 @@ module ViewBacked
         integer: ActiveRecord::ConnectionAdapters::PostgreSQL::OID::Integer,
         date: ActiveRecord::ConnectionAdapters::PostgreSQL::OID::Date,
         decimal: ActiveRecord::ConnectionAdapters::PostgreSQL::OID::Decimal,
-        string: ActiveRecord::Type::String
+        string: ActiveRecord::Type::String,
+        boolean: ActiveRecord::Type::Boolean
       }[type].new
     end
   end
