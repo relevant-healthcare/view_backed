@@ -9,4 +9,4 @@ spec/dummy/.sass-cache
 .byebug_history
 .ruby-version
 Gemfile.lock
-.idea/*
+.idea/

@@ -73,6 +73,7 @@ RSpec.describe ViewBacked do
 
     it 'configures boolean column' do
       expect(view_backed_instance.risk_score_above_2).to eq true
+      expect(view_backed_instance.risk_score_above_2?).to eq true
     end
 
     it 'configures a column defined with #column syntax' do
