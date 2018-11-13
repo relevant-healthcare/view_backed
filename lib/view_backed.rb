@@ -12,7 +12,7 @@ module ViewBacked
 
   class_methods do
     delegate :columns, to: :view_definition
-    prepend ViewBacked::Rails5 if Rails.version.match(/^5/)
+    prepend ViewBacked::Rails5
 
     def view
       yield view_definition
