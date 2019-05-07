@@ -4,7 +4,7 @@ working_directory_and_steps_defaults: &working_directory_and_steps_defaults
     - checkout
     - restore_cache:
         keys:
-        - v1-dependencies-
+        - v1-dependencies-{{ checksum "Gemfile.lock" }}
     - run:
         name: install dependencies
         command: |
@@ -40,14 +40,6 @@ jobs:
   ruby_2.4.1_build_and_test:
     docker:
       - image: circleci/ruby:2.4.1
-        environment:
-          RAILS_ENV: test
-      - image: circleci/postgres:9.6
-        <<: *postgres_defaults
-    <<: *working_directory_and_steps_defaults
-  ruby_2.2_build_and_test:
-    docker:
-      - image: circleci/ruby:2.2
         environment:
           RAILS_ENV: test
       - image: circleci/postgres:9.6
