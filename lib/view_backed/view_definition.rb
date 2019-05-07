@@ -1,6 +1,6 @@
 module ViewBacked
   class ViewDefinition
-    Column = Rails.version.match?(/^5/) ? ColumnRails5 : ColumnRails4
+    Column = Rails.version.match(/^5/) ? ColumnRails5 : ColumnRails4
 
     attr_reader :view_name
 
@@ -32,6 +32,10 @@ module ViewBacked
 
     def decimal(name, expression = name.to_s)
       column(name, :decimal, expression)
+    end
+
+    def boolean(name, expression = name.to_s)
+      column(name, :boolean, expression)
     end
 
     def column(name, data_type, expression = name.to_s)
