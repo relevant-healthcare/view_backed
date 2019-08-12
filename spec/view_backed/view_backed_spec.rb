@@ -104,7 +104,7 @@ RSpec.describe ViewBacked do
       include ViewBacked
 
       materialized true
-      # queries :patients
+      queries :patients
 
       view do |v|
         v.string :id, "provider_id || '-' || date_of_birth"
@@ -136,6 +136,12 @@ RSpec.describe ViewBacked do
         Fabricate(:patient, date_of_birth: Date.new(1991, 11, 30))
         MaterializedViewBackedModel.refresh!
         expect(MaterializedViewBackedModel.count).to eq 2
+      end
+    end
+
+    describe '.queries' do
+      it 'returns queried tables' do
+        expect(MaterializedViewBackedModel.queries).to eq [:patients]
       end
     end
   end

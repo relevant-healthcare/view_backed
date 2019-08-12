@@ -18,9 +18,9 @@ module ViewBacked
       @materialized ||= _materialized
     end
 
-    # def queries(*queried_tables)
-
-    # end
+    def queries(*queried_tables)
+      @queries ||= queried_tables
+    end
 
     def refresh!
       connection.execute "REFRESH MATERIALIZED VIEW #{table_name};"
