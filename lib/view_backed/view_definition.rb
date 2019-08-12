@@ -12,36 +12,41 @@ module ViewBacked
       selections.map(&:column)
     end
 
+    def indexed_column_names
+      selections.select(&:index?).map(&:column_name)
+    end
+
     def scope
       selections.inject(from) do |acc, selection|
         acc.select("(#{selection.expression}) AS #{selection.column.name}")
       end
     end
 
-    def string(name, expression = name.to_s)
-      column(name, :string, expression)
+    def string(name, expression = name.to_s, options = {})
+      column(name, :string, expression, options)
     end
 
-    def integer(name, expression = name.to_s)
-      column(name, :integer, expression)
+    def integer(name, expression = name.to_s, options = {})
+      column(name, :integer, expression, options)
     end
 
-    def date(name, expression = name.to_s)
-      column(name, :date, expression)
+    def date(name, expression = name.to_s, options = {})
+      column(name, :date, expression, options)
     end
 
-    def decimal(name, expression = name.to_s)
-      column(name, :decimal, expression)
+    def decimal(name, expression = name.to_s, options = {})
+      column(name, :decimal, expression, options)
     end
 
-    def boolean(name, expression = name.to_s)
-      column(name, :boolean, expression)
+    def boolean(name, expression = name.to_s, options = {})
+      column(name, :boolean, expression, options)
     end
 
-    def column(name, data_type, expression = name.to_s)
+    def column(name, data_type, expression = name.to_s, options = {})
       selections << Selection.new(
         Column.new(name, nil, data_type).to_active_record_column,
-        expression
+        expression,
+        options
       )
     end
 
@@ -56,15 +61,21 @@ module ViewBacked
     end
 
     class Selection
-      attr_reader :column
+      attr_reader :column, :options
+      delegate :name, to: :column, prefix: true
 
-      def initialize(column, expression)
+      def initialize(column, expression, options)
         @column = column
         @expression = expression
+        @options = options
       end
 
       def expression
         @expression.try(:to_sql) || @expression
+      end
+
+      def index?
+        options[:index]
       end
     end
   end
