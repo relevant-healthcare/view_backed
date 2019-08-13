@@ -32,7 +32,7 @@ module ViewBacked
       if materialized
         connection.execute <<~SQL.squish
           DROP MATERIALIZED VIEW IF EXISTS #{table_name};
-          CREATE MATERIALIZED VIEW #{table_name} AS (#{view_definition.scope.to_sql});
+          CREATE MATERIALIZED VIEW #{table_name} AS (#{view_definition.scope.to_sql}) WITH NO DATA;
         SQL
 
         create_indices!
