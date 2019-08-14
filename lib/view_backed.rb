@@ -29,28 +29,63 @@ module ViewBacked
     def view
       yield view_definition
 
-      if materialized
-        connection.execute <<~SQL.squish
-          DROP MATERIALIZED VIEW IF EXISTS #{table_name};
-          CREATE MATERIALIZED VIEW #{table_name} AS (#{view_definition.scope.to_sql});
-        SQL
-
-        create_indices!
-      else
-        default_scope do
+      default_scope do
+        if materialized
+          materialize! if !view_exists? || definition_has_changed?
+          all
+        else
           from "(#{view_definition.scope.to_sql}) AS #{table_name}"
         end
       end
+    end
+
+    def view_definition
+      @view_definition ||= ViewDefinition.new(table_name)
+    end
+
+    def definition_has_changed?
+      staged_view_name = "staged_#{table_name}"
+
+      staged_view = connection.execute(<<~SQL.squish).first
+        DROP MATERIALIZED VIEW IF EXISTS #{staged_view_name};
+        CREATE MATERIALIZED VIEW #{staged_view_name} AS (#{view_definition.scope.to_sql}) WITH NO DATA;
+        SELECT * FROM pg_matviews WHERE matviewname = '#{staged_view_name}';
+      SQL
+
+      staged_view['definition'] != existing_view_definition
+    ensure
+      connection.execute <<~SQL.squish
+        DROP MATERIALIZED VIEW IF EXISTS #{staged_view_name};
+      SQL
+    end
+
+    def view_exists?
+      existing_view.present?
+    end
+
+    def existing_view
+      connection.execute(<<~SQL.squish).first
+        SELECT * FROM pg_matviews WHERE matviewname = '#{table_name}';
+      SQL
+    end
+
+    def existing_view_definition
+      (existing_view || {})['definition']
+    end
+
+    def materialize!
+      connection.execute <<~SQL.squish
+        DROP MATERIALIZED VIEW IF EXISTS #{table_name};
+        CREATE MATERIALIZED VIEW #{table_name} AS (#{view_definition.scope.to_sql});
+      SQL
+
+      create_indices!
     end
 
     def create_indices!
       view_definition.indexed_column_names.map do |column_name|
         "CREATE INDEX #{table_name} ON (#{column_name});"
       end.join("\n")
-    end
-
-    def view_definition
-      @view_definition ||= ViewDefinition.new(table_name)
     end
   end
 end

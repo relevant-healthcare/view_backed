@@ -99,7 +99,6 @@ RSpec.describe ViewBacked do
   end
 
   context 'materialized view' do
-
     class MaterializedViewBackedModel < ActiveRecord::Base
       include ViewBacked
 
@@ -116,26 +115,26 @@ RSpec.describe ViewBacked do
       end
     end
 
-    let!(:patient) do
-      Fabricate(:patient, date_of_birth: Date.new(1991, 10, 31))
-    end
-
-    let(:view_backed_instance) do
-      MaterializedViewBackedModel.find_by(date_of_birth: Date.new(1991, 10, 31))
+    after do
+      ActiveRecord::Base.connection.execute "DROP MATERIALIZED VIEW IF EXISTS materialized_view_backed_models"
     end
 
     describe '.view' do
-      before { MaterializedViewBackedModel.refresh! }
-
-      it 'still works' do
-        expect(MaterializedViewBackedModel.count).to eq 1
+      it 'only materializes the first time' do
+        expect(MaterializedViewBackedModel).to receive(:materialize!).and_call_original
+        MaterializedViewBackedModel.all
+        expect(MaterializedViewBackedModel).not_to receive(:materialize!)
+        MaterializedViewBackedModel.all
       end
+    end
 
+    describe '.refresh!' do
       it 'refreshes' do
-        expect(MaterializedViewBackedModel.count).to eq 1
+        expect(MaterializedViewBackedModel.count).to eq 0
         Fabricate(:patient, date_of_birth: Date.new(1991, 11, 30))
+        expect(MaterializedViewBackedModel.count).to eq 0
         MaterializedViewBackedModel.refresh!
-        expect(MaterializedViewBackedModel.count).to eq 2
+        expect(MaterializedViewBackedModel.count).to eq 1
       end
     end
 
