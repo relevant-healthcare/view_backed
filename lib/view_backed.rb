@@ -2,6 +2,7 @@ require 'view_backed/column_rails_4'
 require 'view_backed/column_rails_5'
 require 'view_backed/view_definition'
 require 'view_backed/rails_5'
+require 'view_backed/materialized_view'
 
 module ViewBacked
   extend ActiveSupport::Concern
@@ -23,8 +24,10 @@ module ViewBacked
     end
 
     def refresh!
-      ensure_materialized!
-      connection.execute "REFRESH MATERIALIZED VIEW #{table_name};"
+      with_materialized_view do |materialized_view|
+        materialized_view.ensure_current!
+        materialized_view.refresh!
+      end
     end
 
     def view
@@ -32,7 +35,7 @@ module ViewBacked
 
       default_scope do
         if materialized
-          ensure_materialized!
+          materialize!
           all
         else
           from "(#{view_definition.scope.to_sql}) AS #{table_name}"
@@ -44,54 +47,21 @@ module ViewBacked
       @view_definition ||= ViewDefinition.new(table_name)
     end
 
-    def definition_has_changed?
-      staged_view_name = "staged_#{table_name}"
-
-      staged_view = connection.execute(<<~SQL.squish).first
-        DROP MATERIALIZED VIEW IF EXISTS #{staged_view_name};
-        CREATE MATERIALIZED VIEW #{staged_view_name} AS (#{view_definition.scope.to_sql}) WITH NO DATA;
-        SELECT * FROM pg_matviews WHERE matviewname = '#{staged_view_name}';
-      SQL
-
-      staged_view['definition'] != existing_view_definition
-    ensure
-      connection.execute <<~SQL.squish
-        DROP MATERIALIZED VIEW IF EXISTS #{staged_view_name};
-      SQL
-    end
-
-    def view_exists?
-      existing_view.present?
-    end
-
-    def existing_view
-      connection.execute(<<~SQL.squish).first
-        SELECT * FROM pg_matviews WHERE matviewname = '#{table_name}';
-      SQL
-    end
-
-    def existing_view_definition
-      (existing_view || {})['definition']
-    end
-
-    def ensure_materialized!
-      return if view_exists? || !definition_has_changed?
-      materialize!
-    end
-
     def materialize!
-      connection.execute <<~SQL.squish
-        DROP MATERIALIZED VIEW IF EXISTS #{table_name};
-        CREATE MATERIALIZED VIEW #{table_name} AS (#{view_definition.scope.to_sql});
-      SQL
-
-      create_indices!
+      with_materialized_view do |materialized_view|
+        materialized_view.ensure_current!
+        sleep 1 until materialized_view.populated?
+      end
     end
 
-    def create_indices!
-      view_definition.indexed_column_names.map do |column_name|
-        "CREATE INDEX #{table_name} ON (#{column_name});"
-      end.join("\n")
+    private
+
+    def with_materialized_view
+      yield MaterializedView.new(
+        name: table_name,
+        sql: view_definition.scope.to_sql,
+        indexed_column_names: view_definition.indexed_column_names
+      )
     end
   end
 end

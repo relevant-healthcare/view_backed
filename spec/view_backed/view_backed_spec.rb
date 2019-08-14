@@ -121,9 +121,9 @@ RSpec.describe ViewBacked do
 
     describe '.view' do
       it 'only materializes the first time' do
-        expect(MaterializedViewBackedModel).to receive(:materialize!).and_call_original
+        expect_any_instance_of(ViewBacked::MaterializedView).to receive(:create!).and_call_original
         MaterializedViewBackedModel.all
-        expect(MaterializedViewBackedModel).not_to receive(:materialize!)
+        expect_any_instance_of(ViewBacked::MaterializedView).not_to receive(:create!)
         MaterializedViewBackedModel.all
       end
     end
