@@ -13,10 +13,8 @@ module ViewBacked
 
     def ensure_current!
       return if exists? && current?
-      connection.transaction do
-        drop_if_exists!
-        create!
-      end
+      drop_if_exists!
+      create!
     end
 
     def create!
