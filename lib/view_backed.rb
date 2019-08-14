@@ -23,6 +23,7 @@ module ViewBacked
     end
 
     def refresh!
+      ensure_materialized!
       connection.execute "REFRESH MATERIALIZED VIEW #{table_name};"
     end
 
@@ -31,7 +32,7 @@ module ViewBacked
 
       default_scope do
         if materialized
-          materialize! if !view_exists? || definition_has_changed?
+          ensure_materialized!
           all
         else
           from "(#{view_definition.scope.to_sql}) AS #{table_name}"
@@ -71,6 +72,11 @@ module ViewBacked
 
     def existing_view_definition
       (existing_view || {})['definition']
+    end
+
+    def ensure_materialized!
+      return if view_exists? || !definition_has_changed?
+      materialize!
     end
 
     def materialize!
