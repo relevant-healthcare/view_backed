@@ -4,6 +4,8 @@ module ViewBacked
 
     attr_reader :view_name
 
+    delegate :to_sql, to: :scope
+
     def initialize(view_name)
       @view_name = view_name
     end

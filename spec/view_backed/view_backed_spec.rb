@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe ViewBacked do
-  context 'unmaterialized view' do
+  context 'not materialized' do
     class ViewBackedModel < ActiveRecord::Base
       include ViewBacked
 
@@ -98,49 +98,91 @@ RSpec.describe ViewBacked do
     end
   end
 
-  context 'materialized view' do
-    class MaterializedViewBackedModel < ActiveRecord::Base
-      include ViewBacked
+  context 'materialized' do
 
-      materialized true
-      queries :patients
+    let(:materialized_view_back_model) do
+      Class.new(ActiveRecord::Base) do |c|
+        c.include ViewBacked
 
-      view do |v|
-        v.string :id, "provider_id || '-' || date_of_birth"
-        v.integer :provider_id, 'provider_id', index: true
-        v.date :date_of_birth
-        v.integer :patient_count, 'COUNT(*)'
+        c.materialized true
 
-        v.from Patient.group(:provider_id, :date_of_birth)
+        c.view do |v|
+          v.integer :id
+          v.integer :provider_id, 'provider_id', index: true
+          v.date :date_of_birth
+
+          v.from Patient.all
+        end
       end
     end
 
+    let(:view_class_name) { 'TestView' }
+    let(:view_table_name) { view_class_name.tableize }
+
+    before { allow(materialized_view_back_model).to receive(:name) { view_class_name } }
+    before { allow(materialized_view_back_model).to receive(:table_name) { view_table_name } }
+
     after do
-      ActiveRecord::Base.connection.execute "DROP MATERIALIZED VIEW IF EXISTS materialized_view_backed_models"
+      ActiveRecord::Base.connection.execute "DROP MATERIALIZED VIEW IF EXISTS #{view_table_name}"
     end
 
     describe '.view' do
-      it 'only materializes the first time' do
-        expect_any_instance_of(ViewBacked::MaterializedView).to receive(:create!).and_call_original
-        MaterializedViewBackedModel.all
-        expect_any_instance_of(ViewBacked::MaterializedView).not_to receive(:create!)
-        MaterializedViewBackedModel.all
+      context 'when a view does not exist in the database' do
+        before do
+          materialized_view_back_model.all # trigger view creation
+        end
+
+        let(:persisted_view) do
+          ActiveRecord::Base.connection.execute(
+            "SELECT * FROM pg_matviews WHERE matviewname = '#{view_table_name}'"
+          ).first
+        end
+
+        it 'creates the view' do
+          expect(persisted_view).to be_present
+        end
+      end
+
+      context 'when there is an outdated view in the database' do
+        before do
+          ActiveRecord::Base.connection.execute <<~SQL.squish
+            DROP MATERIALIZED VIEW IF EXISTS #{view_table_name};
+            CREATE MATERIALIZED VIEW #{view_table_name} AS (SELECT 'out-of-date' AS date_of_birth);
+          SQL
+          Fabricate(:patient, date_of_birth: Date.new(1991, 10, 1))
+        end
+
+        it 'recreates the view' do
+          expect(materialized_view_back_model.first.date_of_birth).to eq Date.new(1991, 10, 1)
+        end
+      end
+
+      context 'when there is an up-to-date view in the database' do
+        before do
+          ActiveRecord::Base.connection.execute <<~SQL.squish
+            DROP MATERIALIZED VIEW IF EXISTS #{view_table_name};
+            CREATE MATERIALIZED VIEW #{view_table_name} AS (#{materialized_view_back_model.view_definition.to_sql});
+          SQL
+
+          Fabricate(:patient, date_of_birth: Date.new(1991, 10, 1))
+        end
+
+        it 'does not recreate the view' do
+          expect(materialized_view_back_model.count).to eq 0
+        end
       end
     end
 
     describe '.refresh!' do
-      it 'refreshes' do
-        expect(MaterializedViewBackedModel.count).to eq 0
+      before do
+        materialized_view_back_model.all # trigger view creation
         Fabricate(:patient, date_of_birth: Date.new(1991, 11, 30))
-        expect(MaterializedViewBackedModel.count).to eq 0
-        MaterializedViewBackedModel.refresh!
-        expect(MaterializedViewBackedModel.count).to eq 1
       end
-    end
 
-    describe '.queries' do
-      it 'returns queried tables' do
-        expect(MaterializedViewBackedModel.queries).to eq [:patients]
+      it 'refreshes' do
+        expect(materialized_view_back_model.count).to eq 0
+        materialized_view_back_model.refresh!
+        expect(materialized_view_back_model.count).to eq 1
       end
     end
   end
