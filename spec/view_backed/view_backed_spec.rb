@@ -99,28 +99,22 @@ RSpec.describe ViewBacked do
   end
 
   context 'materialized' do
+    class MaterializedViewBackedModel < ActiveRecord::Base
+      include ViewBacked
 
-    let(:materialized_view_back_model) do
-      Class.new(ActiveRecord::Base) do |c|
-        c.include ViewBacked
+      materialized true
 
-        c.materialized true
+      view do |v|
+        v.integer :id
+        v.integer :provider_id, 'provider_id', index: true
+        v.date :date_of_birth
 
-        c.view do |v|
-          v.integer :id
-          v.integer :provider_id, 'provider_id', index: true
-          v.date :date_of_birth
-
-          v.from Patient.all
-        end
+        v.from Patient.all
       end
     end
 
-    let(:view_class_name) { 'TestView' }
-    let(:view_table_name) { view_class_name.tableize }
-
-    before { allow(materialized_view_back_model).to receive(:name) { view_class_name } }
-    before { allow(materialized_view_back_model).to receive(:table_name) { view_table_name } }
+    let(:view_class_name) { 'MaterializedViewBackedModel' }
+    let(:view_table_name) { MaterializedViewBackedModel.table_name }
 
     after do
       ActiveRecord::Base.connection.execute "DROP MATERIALIZED VIEW IF EXISTS #{view_table_name}"
@@ -129,7 +123,7 @@ RSpec.describe ViewBacked do
     describe '.view' do
       context 'when a view does not exist in the database' do
         before do
-          materialized_view_back_model.all # trigger view creation
+          MaterializedViewBackedModel.all # trigger view creation
         end
 
         let(:persisted_view) do
@@ -153,7 +147,7 @@ RSpec.describe ViewBacked do
         end
 
         it 'recreates the view' do
-          expect(materialized_view_back_model.first.date_of_birth).to eq Date.new(1991, 10, 1)
+          expect(MaterializedViewBackedModel.first.date_of_birth).to eq Date.new(1991, 10, 1)
         end
       end
 
@@ -161,28 +155,28 @@ RSpec.describe ViewBacked do
         before do
           ActiveRecord::Base.connection.execute <<~SQL.squish
             DROP MATERIALIZED VIEW IF EXISTS #{view_table_name};
-            CREATE MATERIALIZED VIEW #{view_table_name} AS (#{materialized_view_back_model.view_definition.to_sql});
+            CREATE MATERIALIZED VIEW #{view_table_name} AS (#{MaterializedViewBackedModel.view_definition.to_sql});
           SQL
 
           Fabricate(:patient, date_of_birth: Date.new(1991, 10, 1))
         end
 
         it 'does not recreate the view' do
-          expect(materialized_view_back_model.count).to eq 0
+          expect(MaterializedViewBackedModel.count).to eq 0
         end
       end
     end
 
     describe '.refresh!' do
       before do
-        materialized_view_back_model.all # trigger view creation
+        MaterializedViewBackedModel.all # trigger view creation
         Fabricate(:patient, date_of_birth: Date.new(1991, 11, 30))
       end
 
       it 'refreshes' do
-        expect(materialized_view_back_model.count).to eq 0
-        materialized_view_back_model.refresh!
-        expect(materialized_view_back_model.count).to eq 1
+        expect(MaterializedViewBackedModel.count).to eq 0
+        MaterializedViewBackedModel.refresh!
+        expect(MaterializedViewBackedModel.count).to eq 1
       end
     end
   end

@@ -19,10 +19,6 @@ module ViewBacked
       @materialized ||= _materialized
     end
 
-    def queries(*queried_tables)
-      @queries ||= queried_tables
-    end
-
     def refresh!
       with_materialized_view do |materialized_view|
         materialized_view.ensure_current!
@@ -35,7 +31,7 @@ module ViewBacked
 
       default_scope do
         if materialized
-          materialize!
+          ensure_current_data!
           all
         else
           from "(#{view_definition.scope.to_sql}) AS #{table_name}"
@@ -47,7 +43,7 @@ module ViewBacked
       @view_definition ||= ViewDefinition.new(table_name)
     end
 
-    def materialize!
+    def ensure_current_data!
       with_materialized_view do |materialized_view|
         materialized_view.ensure_current!
         sleep 1 until materialized_view.populated?
