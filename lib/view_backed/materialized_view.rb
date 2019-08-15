@@ -25,7 +25,7 @@ module ViewBacked
     end
 
     def populated?
-      (db_record || {})['ispopulated']
+      (db_record || {})['ispopulated'].in? [true, 't']
     end
 
     def break_db_record_cache!
