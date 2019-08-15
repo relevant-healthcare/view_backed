@@ -89,6 +89,12 @@ RSpec.describe ViewBacked do
       end
     end
 
+    describe '.refresh!' do
+      it 'raises' do
+        expect { ViewBackedModel.refresh! }.to raise_error 'cannot refresh an unmaterialized view'
+      end
+    end
+
     it 'plays nice with associations' do
       expect(view_backed_instance.provider).to eq provider_alpha
       expect(

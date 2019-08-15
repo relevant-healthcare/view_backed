@@ -7,14 +7,35 @@ module ViewBacked
       super
     end
 
-    def drop_if_exists!
-      execute "DROP MATERIALIZED VIEW IF EXISTS #{name};"
-    end
-
     def ensure_current!
       return if exists? && current?
       drop_if_exists!
       create!
+    end
+
+    def refresh!
+      execute "REFRESH MATERIALIZED VIEW #{name};"
+    end
+
+    def wait_until_populated
+      until populated?
+        sleep 1
+        break_db_record_cache!
+      end
+    end
+
+    def populated?
+      (db_record || {})['ispopulated']
+    end
+
+    def break_db_record_cache!
+      @db_record = nil
+    end
+
+    protected
+
+    def drop_if_exists!
+      execute "DROP MATERIALIZED VIEW IF EXISTS #{name};"
     end
 
     def create!
@@ -23,9 +44,13 @@ module ViewBacked
       index!
     end
 
-    def refresh!
-      execute "REFRESH MATERIALIZED VIEW #{name};"
+    def definition_in_db
+      (db_record || {})['definition']
     end
+
+    private
+
+    delegate :execute, to: :connection
 
     def index!
       execute(
@@ -39,24 +64,12 @@ module ViewBacked
       db_record.present?
     end
 
-    def populated?
-      (db_record || {})['ispopulated']
-    end
-
     def current?
       with_temp_view do |temp_view|
         temp_view.create!
         return temp_view.definition_in_db == definition_in_db
       end
     end
-
-    protected
-
-    def definition_in_db
-      (db_record || {})['definition']
-    end
-
-    private
 
     def with_temp_view
       temp_view = MaterializedView.new(
@@ -71,10 +84,6 @@ module ViewBacked
 
     def db_record
       @db_record ||= execute("SELECT * FROM pg_matviews WHERE matviewname = '#{name}';").first
-    end
-
-    def execute(query)
-      connection.execute(query)
     end
 
     def connection

@@ -20,6 +20,7 @@ module ViewBacked
     end
 
     def refresh!
+      raise 'cannot refresh an unmaterialized view' unless materialized
       with_materialized_view do |materialized_view|
         materialized_view.ensure_current!
         materialized_view.refresh!
@@ -46,11 +47,15 @@ module ViewBacked
     def ensure_current_data!
       with_materialized_view do |materialized_view|
         materialized_view.ensure_current!
-        sleep 1 until materialized_view.populated?
+        materialized_view.wait_until_populated
       end
     end
 
     private
+
+    def materialized?
+      materialized
+    end
 
     def with_materialized_view
       yield MaterializedView.new(
