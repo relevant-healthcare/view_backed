@@ -21,8 +21,32 @@ RSpec.describe ViewBacked::MaterializedView do
       allow(materialized_view).to receive(:populated?).and_return(false, true)
       expect(materialized_view).to receive(:break_db_record_cache!)
       expect(materialized_view).to receive(:populated?).twice
-
       materialized_view.wait_until_populated
+    end
+
+    context 'when max_refresh_wait_time is set' do
+      before do
+        ViewBacked.options[:max_refresh_wait_time] = max_refresh_wait_time
+        allow(materialized_view).to receive(:populated?).and_return(false, true)
+      end
+
+      context 'and exceeded' do
+        let(:max_refresh_wait_time) { 0.5 }
+
+        it 'raises max refresh wait time exceeded error' do
+          expect { materialized_view.wait_until_populated }.to raise_error(
+            ViewBacked::MaxRefreshWaitTimeExceededError
+          )
+        end
+      end
+
+      context 'and not exceeded' do
+        let(:max_refresh_wait_time) { 3 }
+
+        it 'does not raise' do
+          expect { materialized_view.wait_until_populated }.not_to raise_error
+        end
+      end
     end
   end
 
