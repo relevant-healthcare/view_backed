@@ -25,10 +25,14 @@ RSpec.describe ViewBacked::MaterializedView do
     end
 
     context 'when max_refresh_wait_time is set' do
-      before do
+      around do |example|
+        previous_max_refresh_wait_time = ViewBacked.options[:max_refresh_wait_time]
         ViewBacked.options[:max_refresh_wait_time] = max_refresh_wait_time
-        allow(materialized_view).to receive(:populated?).and_return(false, true)
+        example.run
+        ViewBacked.options[:max_refresh_wait_time] = previous_max_refresh_wait_time
       end
+
+      before { allow(materialized_view).to receive(:populated?).and_return(false, true) }
 
       context 'and exceeded' do
         let(:max_refresh_wait_time) { 0.5 }
