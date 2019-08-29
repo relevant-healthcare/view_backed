@@ -30,7 +30,7 @@ module ViewBacked
       raise 'cannot refresh an unmaterialized view' unless materialized
       with_materialized_view do |materialized_view|
         materialized_view.ensure_current!
-        materialized_view.refresh_concurrently!
+        materialized_view.refresh!
       end
     end
 

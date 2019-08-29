@@ -14,20 +14,17 @@ module ViewBacked
     end
 
     def refresh!
-      MaterializedViewRefresh.new(connection: connection, view_name: name).save!
-    end
-
-    def refresh_concurrently!
       MaterializedViewRefresh.new(
         connection: connection,
         view_name: name,
-        concurrently: true
+        concurrently: populated?
       ).save!
     end
 
     def wait_until_populated
       with_refresh_wait_time_timeout do
         until populated?
+          puts "WAITING. Max: #{ViewBacked.options[:max_refresh_wait_time]}"
           sleep 1
           break_db_record_cache!
         end
