@@ -53,6 +53,7 @@ module ViewBacked
 
     def drop_if_exists!
       execute "DROP MATERIALIZED VIEW IF EXISTS #{name};"
+      break_db_record_cache!
     end
 
     def create!
