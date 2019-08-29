@@ -1,9 +1,9 @@
 module ViewBacked
   class MaterializedView
     include ActiveModel::Model
-    attr_accessor :name, :sql, :indexed_column_names, :with_data
+    attr_accessor :name, :sql, :indices, :with_data
 
-    def initialize(name:, sql:, indexed_column_names: [], with_data: true)
+    def initialize(name:, sql:, indices: [], with_data: true)
       super
     end
 
@@ -14,7 +14,15 @@ module ViewBacked
     end
 
     def refresh!
-      execute "REFRESH MATERIALIZED VIEW #{name};"
+      MaterializedViewRefresh.new(connection: connection, view_name: name).save!
+    end
+
+    def refresh_concurrently!
+      MaterializedViewRefresh.new(
+        connection: connection,
+        view_name: name,
+        concurrently: true
+      ).save!
     end
 
     def wait_until_populated
@@ -65,11 +73,13 @@ module ViewBacked
     delegate :execute, to: :connection
 
     def index!
-      execute(
-        indexed_column_names.map do |column_name|
-          "CREATE INDEX ON #{name} (#{column_name});"
-        end.join("\n")
-      )
+      connection.transaction do
+        indices.each { |index| create_index!(index) }
+      end
+    end
+
+    def create_index!(index)
+      execute "CREATE#{(' UNIQUE' if index.unique?)} INDEX ON #{name} (#{index.column_name});"
     end
 
     def exists?

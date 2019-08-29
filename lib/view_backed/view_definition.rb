@@ -14,8 +14,8 @@ module ViewBacked
       selections.map(&:column)
     end
 
-    def indexed_column_names
-      selections.select(&:index?).map(&:column_name)
+    def indices
+      selections.map(&:index).compact
     end
 
     def scope
@@ -56,6 +56,10 @@ module ViewBacked
       @from ||= from
     end
 
+    def raise_if_without_unique_index!
+      raise MissingUniqueIndexError if indices.none?(&:unique?)
+    end
+
     private
 
     def selections
@@ -66,7 +70,7 @@ module ViewBacked
       attr_reader :column, :options
       delegate :name, to: :column, prefix: true
 
-      def initialize(column, expression, options)
+      def initialize(column, expression, options = {})
         @column = column
         @expression = expression
         @options = options
@@ -76,8 +80,23 @@ module ViewBacked
         @expression.try(:to_sql) || @expression
       end
 
-      def index?
-        options[:index]
+      def index
+        return nil unless options[:index]
+        index_options = options[:index] == true ? { unique: false } : options[:index]
+        Index.new(column_name, index_options)
+      end
+    end
+
+    class Index
+      attr_reader :column_name, :options
+
+      def initialize(column_name, options)
+        @column_name = column_name
+        @options = options
+      end
+
+      def unique?
+        options[:unique]
       end
     end
   end

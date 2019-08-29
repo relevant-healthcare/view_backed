@@ -111,8 +111,8 @@ RSpec.describe ViewBacked do
       materialized true
 
       view do |v|
-        v.integer :id
-        v.integer :provider_id, 'provider_id', index: true
+        v.integer :id, 'id', index: { unique: true }
+        v.integer :provider_id, 'provider_id'
         v.date :date_of_birth
 
         v.from Patient.all
@@ -184,6 +184,26 @@ RSpec.describe ViewBacked do
         MaterializedViewBackedModel.refresh!
         expect(MaterializedViewBackedModel.count).to eq 1
       end
+    end
+  end
+
+  context 'materialized without a unique index' do
+    it 'raises' do
+      expect do
+        class BadMaterializedViewBackedModel < ActiveRecord::Base
+          include ViewBacked
+
+          materialized true
+
+          view do |v|
+            v.integer :id, 'id'
+            v.from Patient.all
+          end
+        end
+      end.to raise_error(
+        ViewBacked::MissingUniqueIndexError,
+        'materialized views must define at least one unique index'
+      )
     end
   end
 end
