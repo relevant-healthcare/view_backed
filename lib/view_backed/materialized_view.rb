@@ -19,6 +19,7 @@ module ViewBacked
         view_name: name,
         concurrently: populated?
       ).save!
+      break_db_record_cache!
     end
 
     def wait_until_populated
@@ -57,6 +58,8 @@ module ViewBacked
 
     def create!
       execute "CREATE MATERIALIZED VIEW #{name} AS (#{sql}) WITH NO DATA;"
+      break_db_record_cache!
+
       refresh! if with_data
       index!
     end

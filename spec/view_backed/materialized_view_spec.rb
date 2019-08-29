@@ -5,10 +5,11 @@ RSpec.describe ViewBacked::MaterializedView do
     ViewBacked::MaterializedView.new(
       name: view_name,
       sql: view_sql,
-      with_data: false
+      with_data: with_data
     )
   end
 
+  let(:with_data) { false }
   let(:view_name) { 'test_view' }
   let(:view_sql) { 'select 1 AS id' }
 
@@ -56,9 +57,9 @@ RSpec.describe ViewBacked::MaterializedView do
 
   describe '#populated?' do
     context 'when populated' do
+      let(:with_data) { true }
       before do
         materialized_view.ensure_current!
-        materialized_view.refresh!
       end
 
       it 'is truthy' do
@@ -85,7 +86,10 @@ RSpec.describe ViewBacked::MaterializedView do
     it 'breaks the cache' do
       expect(materialized_view).not_to be_populated
 
-      materialized_view.refresh!
+      ViewBacked::MaterializedViewRefresh.new(
+        connection: ActiveRecord::Base.connection,
+        view_name: view_name
+      ).save!
 
       expect { materialized_view.break_db_record_cache! }
             .to change { materialized_view.populated? }
