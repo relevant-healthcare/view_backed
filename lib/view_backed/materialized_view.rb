@@ -24,7 +24,6 @@ module ViewBacked
     def wait_until_populated
       with_refresh_wait_time_timeout do
         until populated?
-          puts "WAITING. Max: #{ViewBacked.options[:max_refresh_wait_time]}"
           sleep 1
           break_db_record_cache!
         end
