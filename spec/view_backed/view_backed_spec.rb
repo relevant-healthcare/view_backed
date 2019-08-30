@@ -185,25 +185,18 @@ RSpec.describe ViewBacked do
         expect(MaterializedViewBackedModel.count).to eq 1
       end
     end
-  end
 
-  context 'materialized without a unique index' do
-    it 'raises' do
-      expect do
-        class BadMaterializedViewBackedModel < ActiveRecord::Base
-          include ViewBacked
+    describe '.refresh_concurrently!' do
+      before do
+        MaterializedViewBackedModel.all # trigger view creation
+        Fabricate(:patient, date_of_birth: Date.new(1991, 11, 30))
+      end
 
-          materialized true
-
-          view do |v|
-            v.integer :id, 'id'
-            v.from Patient.all
-          end
-        end
-      end.to raise_error(
-        ViewBacked::MissingUniqueIndexError,
-        'materialized views must define at least one unique index'
-      )
+      it 'refreshes' do
+        expect(MaterializedViewBackedModel.count).to eq 0
+        MaterializedViewBackedModel.refresh_concurrently!
+        expect(MaterializedViewBackedModel.count).to eq 1
+      end
     end
   end
 end

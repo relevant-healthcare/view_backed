@@ -3,7 +3,6 @@ require 'view_backed/column_rails_5'
 require 'view_backed/view_definition'
 require 'view_backed/rails_5'
 require 'view_backed/max_refresh_wait_time_exceeded_error'
-require 'view_backed/missing_unique_index_error'
 require 'view_backed/materialized_view_refresh'
 require 'view_backed/materialized_view'
 
@@ -27,20 +26,18 @@ module ViewBacked
     end
 
     def refresh!
-      raise 'cannot refresh an unmaterialized view' unless materialized
-      with_materialized_view do |materialized_view|
-        materialized_view.ensure_current!
-        materialized_view.refresh!
-      end
+      refresh_with_options!(concurrently: false)
+    end
+
+    def refresh_concurrently!
+      refresh_with_options!(concurrently: true)
     end
 
     def view
       yield view_definition
 
-      ensure_unique_index! if materialized
-
       default_scope do
-        if materialized
+        if materialized?
           ensure_current_data!
           all
         else
@@ -60,16 +57,19 @@ module ViewBacked
       end
     end
 
-    def ensure_unique_index!
-      view_definition.raise_if_without_unique_index!
-    rescue MissingUniqueIndexError
-      raise MissingUniqueIndexError, 'materialized views must define at least one unique index'
+    def materialized?
+      materialized
     end
 
     private
 
-    def materialized?
-      materialized
+    def refresh_with_options!(options)
+      raise 'cannot refresh an unmaterialized view' unless materialized?
+
+      with_materialized_view do |materialized_view|
+        materialized_view.ensure_current!
+        materialized_view.refresh!(options)
+      end
     end
 
     def with_materialized_view

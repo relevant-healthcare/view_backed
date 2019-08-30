@@ -56,10 +56,6 @@ module ViewBacked
       @from ||= from
     end
 
-    def raise_if_without_unique_index!
-      raise MissingUniqueIndexError if indices.none?(&:unique?)
-    end
-
     private
 
     def selections

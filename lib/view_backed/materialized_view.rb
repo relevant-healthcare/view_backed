@@ -14,18 +14,11 @@ module ViewBacked
       create!
     end
 
-    def refresh!
-      MaterializedViewRefresh.new(
-        connection: connection,
-        view_name: name
-      ).save!
-    end
-
-    def refresh_concurrently!
+    def refresh!(concurrently: false)
       MaterializedViewRefresh.new(
         connection: connection,
         view_name: name,
-        concurrently: true
+        concurrently: concurrently
       ).save!
     end
 
