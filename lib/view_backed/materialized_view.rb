@@ -9,6 +9,7 @@ module ViewBacked
 
     def ensure_current!
       return if exists? && current?
+
       drop_if_exists!
       create!
     end
@@ -16,18 +17,21 @@ module ViewBacked
     def refresh!
       MaterializedViewRefresh.new(
         connection: connection,
-        view_name: name,
-        concurrently: populated?
+        view_name: name
       ).save!
-      break_db_record_cache!
+    end
+
+    def refresh_concurrently!
+      MaterializedViewRefresh.new(
+        connection: connection,
+        view_name: name,
+        concurrently: true
+      ).save!
     end
 
     def wait_until_populated
       with_refresh_wait_time_timeout do
-        until populated?
-          sleep 1
-          break_db_record_cache!
-        end
+        sleep 1 until populated?
       end
     end
 
@@ -45,20 +49,14 @@ module ViewBacked
       (db_record || {})['ispopulated'].in? [true, 't']
     end
 
-    def break_db_record_cache!
-      @db_record = nil
-    end
-
     protected
 
     def drop_if_exists!
       execute "DROP MATERIALIZED VIEW IF EXISTS #{name};"
-      break_db_record_cache!
     end
 
     def create!
       execute "CREATE MATERIALIZED VIEW #{name} AS (#{sql}) WITH NO DATA;"
-      break_db_record_cache!
 
       refresh! if with_data
       index!
@@ -105,7 +103,7 @@ module ViewBacked
     end
 
     def db_record
-      @db_record ||= execute("SELECT * FROM pg_matviews WHERE matviewname = '#{name}';").first
+      execute("SELECT * FROM pg_matviews WHERE matviewname = '#{name}';").first
     end
 
     def connection

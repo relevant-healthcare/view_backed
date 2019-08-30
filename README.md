@@ -11,6 +11,7 @@
 - `bundle exec appraisal install` in order to install rails version-specific gemfiles for testing
 
 ### Specs
-- To run Rails 5.0.7 specs: `bundle exec appraisal rails-5 rspec`
+- To run Rails 5.2.3 specs: `bundle exec appraisal rails-5-2 rspec`
+- To run Rails 5.0.7 specs: `bundle exec appraisal rails-5-0 rspec`
 - To run Rails 4.2.7 specs: `bundle exec appraisal rails-4 rspec`
 - To run all specs: `bundle exec appraisal rspec`

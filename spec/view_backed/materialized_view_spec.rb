@@ -18,9 +18,8 @@ RSpec.describe ViewBacked::MaterializedView do
   end
 
   describe '#wait_until_populated' do
-    it 'calls #break_db_record_cache! and waits until populated? is true' do
+    it 'waits until populated? is true' do
       allow(materialized_view).to receive(:populated?).and_return(false, true)
-      expect(materialized_view).to receive(:break_db_record_cache!)
       expect(materialized_view).to receive(:populated?).twice
       materialized_view.wait_until_populated
     end
@@ -75,26 +74,6 @@ RSpec.describe ViewBacked::MaterializedView do
       it 'is falsey' do
         expect(materialized_view).not_to be_populated
       end
-    end
-  end
-
-  describe '#break_db_record_cache' do
-    before do
-      materialized_view.ensure_current!
-    end
-
-    it 'breaks the cache' do
-      expect(materialized_view).not_to be_populated
-
-      ViewBacked::MaterializedViewRefresh.new(
-        connection: ActiveRecord::Base.connection,
-        view_name: view_name
-      ).save!
-
-      expect { materialized_view.break_db_record_cache! }
-            .to change { materialized_view.populated? }
-            .from(false)
-            .to(true)
     end
   end
 end
