@@ -26,11 +26,11 @@ module ViewBacked
     end
 
     def refresh!
-      refresh_with_options!(concurrently: false)
+      refresh_with_options!(try_concurrently: false)
     end
 
-    def refresh_concurrently!
-      refresh_with_options!(concurrently: true)
+    def refresh_concurrently_if_possible!
+      refresh_with_options!(try_concurrently: true)
     end
 
     def view
@@ -68,7 +68,9 @@ module ViewBacked
 
       with_materialized_view do |materialized_view|
         materialized_view.ensure_current!
-        materialized_view.refresh!(options)
+
+        should_refresh_concurrently = options[:try_concurrently] && materialized_view.populated?
+        materialized_view.refresh!(concurrently: should_refresh_concurrently)
       end
     end
 
