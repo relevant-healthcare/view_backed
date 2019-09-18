@@ -19,7 +19,6 @@ module ViewBacked
 
   class_methods do
     delegate :columns, to: :view_definition
-    delegate :drop_if_exists!, to: :materialized_view
     prepend ViewBacked::Rails5 if Rails.version.match(/^5/)
 
     def materialized(_materialized = false)
@@ -32,6 +31,12 @@ module ViewBacked
       with_materialized_view do |materialized_view|
         materialized_view.ensure_current!
         materialized_view.refresh!
+      end
+    end
+
+    def drop_if_exists!
+      with_materialized_view do |materialized_view|
+        materialized_view.drop_if_exists!
       end
     end
 
