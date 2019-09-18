@@ -42,11 +42,11 @@ module ViewBacked
       (db_record || {})['ispopulated'].in? [true, 't']
     end
 
-    protected
-
     def drop_if_exists!
       execute "DROP MATERIALIZED VIEW IF EXISTS #{name};"
     end
+
+    protected
 
     def create!
       execute "CREATE MATERIALIZED VIEW #{name} AS (#{sql}) WITH NO DATA;"
