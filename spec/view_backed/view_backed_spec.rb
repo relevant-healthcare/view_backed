@@ -185,18 +185,5 @@ RSpec.describe ViewBacked do
         expect(MaterializedViewBackedModel.count).to eq 1
       end
     end
-
-    describe '.refresh_concurrently_if_possible!' do
-      before do
-        MaterializedViewBackedModel.all # trigger view creation
-        Fabricate(:patient, date_of_birth: Date.new(1991, 11, 30))
-      end
-
-      it 'refreshes' do
-        expect(MaterializedViewBackedModel.count).to eq 0
-        MaterializedViewBackedModel.refresh_concurrently_if_possible!
-        expect(MaterializedViewBackedModel.count).to eq 1
-      end
-    end
   end
 end

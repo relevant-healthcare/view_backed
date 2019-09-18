@@ -26,11 +26,12 @@ module ViewBacked
     end
 
     def refresh!
-      refresh_with_options!(try_concurrently: false)
-    end
+      raise 'cannot refresh an unmaterialized view' unless materialized?
 
-    def refresh_concurrently_if_possible!
-      refresh_with_options!(try_concurrently: true)
+      with_materialized_view do |materialized_view|
+        materialized_view.ensure_current!
+        materialized_view.refresh!
+      end
     end
 
     def view
@@ -62,17 +63,6 @@ module ViewBacked
     end
 
     private
-
-    def refresh_with_options!(options)
-      raise 'cannot refresh an unmaterialized view' unless materialized?
-
-      with_materialized_view do |materialized_view|
-        materialized_view.ensure_current!
-
-        should_refresh_concurrently = options[:try_concurrently] && materialized_view.populated?
-        materialized_view.refresh!(concurrently: should_refresh_concurrently)
-      end
-    end
 
     def with_materialized_view
       yield MaterializedView.new(
