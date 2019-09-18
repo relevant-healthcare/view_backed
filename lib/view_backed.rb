@@ -2,7 +2,7 @@ require 'view_backed/column_rails_4'
 require 'view_backed/column_rails_5'
 require 'view_backed/view_definition'
 require 'view_backed/rails_5'
-require 'view_backed/max_refresh_wait_time_exceeded_error'
+require 'view_backed/max_wait_until_populated_time_exceeded_error'
 require 'view_backed/materialized_view_refresh'
 require 'view_backed/materialized_view'
 
@@ -14,7 +14,7 @@ module ViewBacked
   end
 
   def self.options
-    @options ||= { max_refresh_wait_time: nil }
+    @options ||= { max_wait_until_populated: nil }
   end
 
   class_methods do

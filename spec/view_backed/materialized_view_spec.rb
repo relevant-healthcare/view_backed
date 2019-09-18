@@ -24,28 +24,28 @@ RSpec.describe ViewBacked::MaterializedView do
       materialized_view.wait_until_populated
     end
 
-    context 'when max_refresh_wait_time is set' do
+    context 'when max_wait_until_populated is set' do
       around do |example|
-        previous_max_refresh_wait_time = ViewBacked.options[:max_refresh_wait_time]
-        ViewBacked.options[:max_refresh_wait_time] = max_refresh_wait_time
+        previous_max_wait_until_populated = ViewBacked.options[:max_wait_until_populated]
+        ViewBacked.options[:max_wait_until_populated] = max_wait_until_populated
         example.run
-        ViewBacked.options[:max_refresh_wait_time] = previous_max_refresh_wait_time
+        ViewBacked.options[:max_wait_until_populated] = previous_max_wait_until_populated
       end
 
       before { allow(materialized_view).to receive(:populated?).and_return(false, true) }
 
       context 'and exceeded' do
-        let(:max_refresh_wait_time) { 0.5 }
+        let(:max_wait_until_populated) { 0.5 }
 
         it 'raises max refresh wait time exceeded error' do
           expect { materialized_view.wait_until_populated }.to raise_error(
-            ViewBacked::MaxRefreshWaitTimeExceededError
+            ViewBacked::MaxWaitUntilPopulatedTimeExceededError
           )
         end
       end
 
       context 'and not exceeded' do
-        let(:max_refresh_wait_time) { 3 }
+        let(:max_wait_until_populated) { 3 }
 
         it 'does not raise' do
           expect { materialized_view.wait_until_populated }.not_to raise_error

@@ -23,18 +23,18 @@ module ViewBacked
     end
 
     def wait_until_populated
-      with_refresh_wait_time_timeout do
+      with_wait_until_populated_timeout do
         sleep 1 until populated?
       end
     end
 
-    def with_refresh_wait_time_timeout
-      return yield if ViewBacked.options[:max_refresh_wait_time].blank?
+    def with_wait_until_populated_timeout
+      return yield if ViewBacked.options[:max_wait_until_populated].blank?
 
       begin
-        Timeout.timeout(ViewBacked.options[:max_refresh_wait_time]) { yield }
+        Timeout.timeout(ViewBacked.options[:max_wait_until_populated]) { yield }
       rescue Timeout::Error
-        raise ViewBacked::MaxRefreshWaitTimeExceededError
+        raise ViewBacked::MaxWaitUntilPopulatedTimeExceededError
       end
     end
 
