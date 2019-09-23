@@ -14,11 +14,10 @@ module ViewBacked
       create!
     end
 
-    def refresh!(concurrently: false)
+    def refresh!
       MaterializedViewRefresh.new(
         connection: connection,
-        view_name: name,
-        concurrently: concurrently
+        view_name: name
       ).save!
     end
 
@@ -80,6 +79,11 @@ module ViewBacked
     def current?
       with_temp_view do |temp_view|
         temp_view.create!
+        # Postgres formats the sql in the definition column of a materialized
+        # view in a particular way. In order to compare the current-in-code
+        # definition sql with the current-in-database definition sql, we
+        # create a dummy temp view. This way, the sql we compare have the same
+        # formatting.
         return temp_view.definition_in_db == definition_in_db
       end
     end

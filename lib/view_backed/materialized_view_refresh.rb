@@ -1,14 +1,14 @@
 module ViewBacked
   class MaterializedViewRefresh
     include ActiveModel::Model
-    attr_accessor :view_name, :connection, :concurrently
+    attr_accessor :view_name, :connection
 
-    def initialize(view_name:, connection:, concurrently: false)
+    def initialize(view_name:, connection:)
       super
     end
 
     def save!
-      connection.execute "REFRESH MATERIALIZED VIEW#{(' CONCURRENTLY' if concurrently)} #{view_name};"
+      connection.execute "REFRESH MATERIALIZED VIEW #{view_name};"
     end
   end
 end
