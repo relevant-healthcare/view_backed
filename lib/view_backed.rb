@@ -17,6 +17,18 @@ module ViewBacked
     @options ||= { max_wait_until_populated: nil }
   end
 
+  included do
+    # default_scope synonymous to .all in ViewBacked Models.
+    default_scope do
+      if materialized?
+        ensure_current_data!
+        all
+      else
+        from "(#{view_definition.scope.to_sql}) AS #{table_name}"
+      end
+    end
+  end
+
   class_methods do
     delegate :columns, to: :view_definition
     prepend ViewBacked::Rails5 if Rails.version.match(/^5/)
@@ -42,15 +54,6 @@ module ViewBacked
 
     def view
       yield view_definition
-
-      default_scope do
-        if materialized?
-          ensure_current_data!
-          all
-        else
-          from "(#{view_definition.scope.to_sql}) AS #{table_name}"
-        end
-      end
     end
 
     def view_definition
