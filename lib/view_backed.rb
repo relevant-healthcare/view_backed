@@ -40,10 +40,9 @@ module ViewBacked
       end
     end
 
-    def view
-      yield view_definition
-
+    def view(&blk)
       default_scope do
+        blk.call(view_definition)
         if materialized?
           ensure_current_data!
           all
