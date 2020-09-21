@@ -7,8 +7,8 @@ require "view_backed/version"
 Gem::Specification.new do |s|
   s.name        = "view_backed"
   s.version     = ViewBacked::VERSION
-  s.authors     = ["Kevin Finn"]
-  s.email       = ["kevin@relevant.healthcare"]
+  s.authors     = ["Relevant Healthcare"]
+  s.email       = ["dev@relevant.healthcare"]
   s.homepage    = "https://github.com/relevant-healthcare/view_backed"
   s.summary     = "Create view backed models with Rails"
   s.description = "Create view backed models with Rails"
