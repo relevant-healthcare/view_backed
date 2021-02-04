@@ -109,6 +109,12 @@ module ViewBacked
         end
         connection.execute("SELECT * FROM pg_matviews WHERE matviewname = '#{name}';").first
       end
+    rescue ActiveRecord::QueryCanceled, PG::QueryCanceled => e
+      if ViewBacked.options[:max_wait_until_populated]
+        raise ViewBacked::MaxWaitUntilPopulatedTimeExceededError
+      else
+        raise e
+      end
     end
 
     def connection
