@@ -8,7 +8,13 @@ module ViewBacked
     end
 
     def ensure_current!
-      return if exists? && current?
+      # When a materialized view is refreshing, it takes a lock on its corresponding row in
+      # pg_matviews. As a consequence, #exists and #current? both hang until the view finishes
+      # refreshing. Since this may take a long time and cause web requests to pile up, we wrap
+      # it in the configurable timeout block.
+      with_wait_until_populated_timeout do
+        return if exists? && current?
+      end
 
       drop_if_exists!
       create!
@@ -24,16 +30,6 @@ module ViewBacked
     def wait_until_populated
       with_wait_until_populated_timeout do
         sleep 1 until populated?
-      end
-    end
-
-    def with_wait_until_populated_timeout
-      return yield if ViewBacked.options[:max_wait_until_populated].blank?
-
-      begin
-        Timeout.timeout(ViewBacked.options[:max_wait_until_populated]) { yield }
-      rescue Timeout::Error
-        raise ViewBacked::MaxWaitUntilPopulatedTimeExceededError
       end
     end
 
@@ -61,6 +57,16 @@ module ViewBacked
     private
 
     delegate :execute, to: :connection
+
+    def with_wait_until_populated_timeout
+      return yield if ViewBacked.options[:max_wait_until_populated].blank?
+
+      begin
+        Timeout.timeout(ViewBacked.options[:max_wait_until_populated]) { yield }
+      rescue Timeout::Error
+        raise ViewBacked::MaxWaitUntilPopulatedTimeExceededError
+      end
+    end
 
     def index!
       connection.transaction do
