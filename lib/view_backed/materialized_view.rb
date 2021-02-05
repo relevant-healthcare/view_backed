@@ -27,16 +27,6 @@ module ViewBacked
       end
     end
 
-    def with_wait_until_populated_timeout
-      return yield if ViewBacked.options[:max_wait_until_populated].blank?
-
-      begin
-        Timeout.timeout(ViewBacked.options[:max_wait_until_populated]) { yield }
-      rescue Timeout::Error
-        raise ViewBacked::MaxWaitUntilPopulatedTimeExceededError
-      end
-    end
-
     def populated?
       (db_record || {})['ispopulated'].in? [true, 't']
     end
@@ -61,6 +51,16 @@ module ViewBacked
     private
 
     delegate :execute, to: :connection
+
+    def with_wait_until_populated_timeout
+      return yield if ViewBacked.options[:max_wait_until_populated].blank?
+
+      begin
+        Timeout.timeout(ViewBacked.options[:max_wait_until_populated]) { yield }
+      rescue Timeout::Error
+        raise ViewBacked::MaxWaitUntilPopulatedTimeExceededError
+      end
+    end
 
     def index!
       connection.transaction do
@@ -100,7 +100,21 @@ module ViewBacked
     end
 
     def db_record
-      execute("SELECT * FROM pg_matviews WHERE matviewname = '#{name}';").first
+      connection.transaction do
+        # When a materialized view is refreshing, it takes a lock on its corresponding row in
+        # pg_matviews. Since this may take a long time and cause web requests to pile up, we
+        # set a timeout when making this query.
+        if (timeout = ViewBacked.options[:max_wait_until_populated])
+          connection.execute("SET LOCAL statement_timeout = '#{timeout}s';")
+        end
+        connection.execute("SELECT * FROM pg_matviews WHERE matviewname = '#{name}';").first
+      end
+    rescue ActiveRecord::QueryCanceled, PG::QueryCanceled => e
+      if ViewBacked.options[:max_wait_until_populated]
+        raise ViewBacked::MaxWaitUntilPopulatedTimeExceededError
+      else
+        raise e
+      end
     end
 
     def connection
