@@ -19,7 +19,7 @@ module ViewBacked
 
   class_methods do
     delegate :columns, to: :view_definition
-    prepend ViewBacked::Rails5 if Rails.version.match(/^5/)
+    prepend ViewBacked::Rails5Or6 if Rails.version.match(/^(5|6)/)
 
     def materialized(_materialized = false)
       @materialized ||= _materialized
