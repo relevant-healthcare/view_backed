@@ -1,5 +1,5 @@
 module ViewBacked
-  module Rails5
+  module Rails5Or6
     def view
       super
 
