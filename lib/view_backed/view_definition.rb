@@ -1,6 +1,6 @@
 module ViewBacked
   class ViewDefinition
-    Column = ActiveRecord.version.match(/^(5|6)/) ? ColumnRails5Or6 : ColumnRails4
+    Column = ActiveRecord.version.to_s.match(/^(5|6)/) ? ColumnRails5Or6 : ColumnRails4
 
     attr_reader :view_name
 
