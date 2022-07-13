@@ -6,8 +6,10 @@ module ViewBacked
       )
     end
 
-    def deduplicate
-      self
+    if Rails.version.match(/^6.1/)
+      def deduplicate
+        self
+      end
     end
   end
 end
