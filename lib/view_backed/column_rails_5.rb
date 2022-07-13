@@ -5,5 +5,9 @@ module ViewBacked
         name.to_s, default, self
       )
     end
+
+    def deduplicate
+      self
+    end
   end
 end
