@@ -6,6 +6,11 @@ module ViewBacked
       )
     end
 
+    # https://github.com/rails/rails/pull/35891
+    # Rails 6.1 added deduplication of AR schema cache structures to save memory
+    # when these structures are identical (i.e. same column names and types).
+    # The below code avoids deduplication, but in theory, could add it by
+    # reimplementing ActiveRecord::ConnectionAdapters::Deduplicable.
     if Rails.version.match(/^6.1/)
       def deduplicate
         self
