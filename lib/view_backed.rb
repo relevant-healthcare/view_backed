@@ -1,7 +1,5 @@
-require 'view_backed/column_rails_4'
-require 'view_backed/column_rails_5'
 require 'view_backed/view_definition'
-require 'view_backed/rails_5'
+require 'view_backed/column'
 require 'view_backed/max_wait_until_populated_time_exceeded_error'
 require 'view_backed/materialized_view_refresh'
 require 'view_backed/materialized_view'
