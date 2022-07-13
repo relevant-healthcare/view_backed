@@ -6,8 +6,8 @@
 - Clone repo
 - `cd view_backed`
 - `bundle install`
-- Create a postgres user with name `view_backed` and password `view_backed`
-- `bundle exec rake db:reset`
+- Create a postgres user with name `view_backed` and password `view_backed` with `CREATEDB` permissions
+- From `PROJECT_ROOT/spec/dummy/`, run `bundle exec rake db:reset`
 - `bundle exec appraisal install` in order to install or update rails version-specific gemfiles for testing
 
 ### Specs
