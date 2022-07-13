@@ -19,7 +19,6 @@ module ViewBacked
 
   class_methods do
     delegate :columns, to: :view_definition
-    prepend ViewBacked::Rails5Or6 if Rails.version.match(/^(5|6)/)
 
     def materialized(_materialized = false)
       @materialized ||= _materialized
@@ -50,6 +49,15 @@ module ViewBacked
         else
           from "(#{view_definition.scope.to_sql}) AS #{table_name}"
         end
+      end
+
+      @columns_hash = columns.group_by(&:name).transform_values(&:first)
+      columns.each do |column|
+        define_attribute(
+          column.name,
+          ActiveModel::Type.registry.lookup(column.type),
+          default: column.default
+        )
       end
     end
 
