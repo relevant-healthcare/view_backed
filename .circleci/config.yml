@@ -15,28 +15,18 @@ working_directory_and_steps_defaults: &working_directory_and_steps_defaults
           - ./vendor/bundle
         key: v1-dependencies-{{ .Branch }}-{{ .Revision }}
     - run: bundle exec appraisal install
-    - run: bundle exec appraisal rails-5-0 'cd spec/dummy/ && rails db:environment:set RAILS_ENV=test'
-    - run: bundle exec appraisal rails-5-2 'cd spec/dummy/ && rails db:environment:set RAILS_ENV=test'
-    - run: bundle exec appraisal rails-6-0 'cd spec/dummy/ && rails db:environment:set RAILS_ENV=test'
     - run: bundle exec appraisal rails-6-1 'cd spec/dummy/ && rails db:environment:set RAILS_ENV=test'
+    - run: bundle exec appraisal rails-7-0 'cd spec/dummy/ && rails db:environment:set RAILS_ENV=test'
     - run: bundle exec appraisal 'cd spec/dummy/ && rake db:schema:load'
     - run: mkdir /tmp/test-results
-    - run:
-        name: run rails 5.0 tests
-        command: |
-          bundle exec appraisal rails-5-0 rspec -r rspec_junit_formatter --format progress --format RspecJunitFormatter
-    - run:
-        name: run rails 5.2 tests
-        command: |
-          bundle exec appraisal rails-5-2 rspec -r rspec_junit_formatter --format progress --format RspecJunitFormatter
-    - run:
-        name: run rails 6.0 tests
-        command: |
-          bundle exec appraisal rails-6-0 rspec -r rspec_junit_formatter --format progress --format RspecJunitFormatter
     - run:
         name: run rails 6.1 tests
         command: |
           bundle exec appraisal rails-6-1 rspec -r rspec_junit_formatter --format progress --format RspecJunitFormatter
+    - run:
+        name: run rails 7.0 tests
+        command: |
+          bundle exec appraisal rails-7-0 rspec -r rspec_junit_formatter --format progress --format RspecJunitFormatter
     - store_test_results:
         path: /tmp/test-results
     - store_artifacts:

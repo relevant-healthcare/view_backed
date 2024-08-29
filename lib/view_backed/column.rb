@@ -11,7 +11,7 @@ module ViewBacked
     # when these structures are identical (i.e. same column names and types).
     # The below code avoids deduplication, but in theory, we could add it by
     # reimplementing ActiveRecord::ConnectionAdapters::Deduplicable.
-    if Rails.version.match(/^6.1/)
+    if Rails.version.match(/^(6.1|7)/)
       def deduplicate
         self
       end
